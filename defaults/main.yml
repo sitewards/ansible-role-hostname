@@ -1,0 +1,4 @@
+---
+## The hostname that should be configured for this machine
+## (Required)
+# hostname: ""

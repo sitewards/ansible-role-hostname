@@ -1,0 +1,26 @@
+---
+# Updates the hostname, and replaces the existing hostname (if it exists in /etc/hosts) with the newer hostname.
+- name: "Derive the hostname from the supplied argument"
+  set_fact:
+    # Hostname is sanitized, and truncated at 64 characters to adhere to the DNS slug limit.
+    derived_hostname: "{{ hostname | regex_replace('[^A-Za-z]', '') | truncate(30, False, '') }}"
+
+- name: "Set hostname for the machine"
+  hostname:
+    name: "{{ derived_hostname }}"
+
+# The IP address "127.0.1.1" is used instead of "127.0.0.1" as it's the convention established by Debian to ensure
+# the hostname is resolvable. See
+#  - http://qref.sourceforge.net/quick/ch-gateway.en.html
+#  - https://askubuntu.com/a/754216
+#
+# In practice, it makes no difference; the 127.0.0.0/8 block is all reserved for loopback. See
+#  - https://tools.ietf.org/html/rfc3330
+- name: "Update the /etc/hosts file to reference new hostname"
+  lineinfile:
+    path: "/etc/hosts"
+    regexp: '^127\.0\.1\.1'
+    line: '127.0.1.1 {{ derived_hostname }}'
+    owner: "root"
+    group: "root"
+    mode: "0644"
